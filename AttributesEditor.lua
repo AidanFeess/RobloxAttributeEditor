@@ -79,28 +79,84 @@ local function CreateUi()
 	
 end
 
+local function CreateBoolTypeObject(Value, Attribute, attrValue, attrName)
+	Value.Name = "Value"
+	Value.Parent = Attribute
+	Value.BackgroundColor3 = Color3.fromRGB(38, 39, 36)
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.Size = UDim2.new(0.157, 0, 0.714893639, 0)
+	Value.Position = UDim2.new(.5-(Value.Size.X.Scale / 2), 0, 0.285106421, 0) -- x is an equation to set the button in the center of the screen
+	Value.Font = Enum.Font.SourceSans
+	if attrValue == true then
+		Value.Text = 'X'
+	else
+		Value.Text = ' '
+	end
+	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Value.TextSize = 14.000
+
+	Value.MouseButton1Click:Connect(function()
+		-- ran out of time but this needs to be updated to take in input from the user and flip the bool value, as well as flip the text
+		-- i.e. bool is true, text is "X" ---> bool is false, text is " "
+		if Value.Text == 'X' then
+			LastSelection:SetAttribute(attrName, true)
+		elseif Value.Text == ' ' then
+			LastSelection:SetAttribute(attrName, false)
+		end
+	end)
+	
+end
+
+local function CreateTextTypeObject(Value, Attribute, attrValue, attrType, attrName)
+	Value.Name = "Value"
+	Value.Parent = Attribute
+	Value.BackgroundColor3 = Color3.fromRGB(38, 39, 36)
+	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	Value.Position = UDim2.new(0, 0, 0.285106421, 0)
+	Value.Size = UDim2.new(1, 0, 0.714893639, 0)
+	Value.Font = Enum.Font.SourceSans
+	Value.Text = attrValue
+	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Value.TextSize = 14.000
+
+	Value.FocusLost:Connect(function()
+		local success, err = pcall(function()
+			local valueToReturn = nil
+			if attrType == 'number' then
+				local valueText = string.lower(Value.Text)
+				valueToReturn = tonumber(valueText)
+				if valueToReturn == nil then
+					warn('Your change was not valid: "' .. Value.Text .. '" is not a valid number.') 
+					return
+				end
+			elseif attrType == 'string' then
+				valueToReturn = Value.Text
+			end
+			
+			LastSelection:SetAttribute(attrName, valueToReturn)
+		end)
+		
+		if not success then 
+			warn('For some reason, your change was not valid:', err) 
+		end
+	end)
+	
+end
+
 local function CreateAttribute(attrName, attrValue, attrType, Pos)
 	
-	local isBool = false
-	local isNum = false
-	local isString = false
-	
-	if attrType == 'boolean' then
-		isBool = true
-		if attrValue == true then
-			attrValue = 'True'
-		else
-			attrValue = 'False'
-		end
-	elseif attrType == 'number' then
-		isNum = true
-	elseif attrType == 'string' then
-		isString = true
-	end
 	
 	local Attribute = Instance.new("Frame")
 	local Name = Instance.new("TextLabel")
 	local Value = Instance.new("TextBox")
+	
+	if attrType == 'boolean' then
+		Value:Destroy()
+		Value = Instance.new("TextButton")
+		CreateBoolTypeObject(Value, Attribute, attrValue, attrName)
+	elseif attrType == 'number' or attrType == 'string' then
+		CreateTextTypeObject(Value, Attribute, attrValue, attrName)
+	end
 	
 	Attribute.Name = "Attribute"
 	Attribute.Parent = Ui
@@ -120,48 +176,6 @@ local function CreateAttribute(attrName, attrValue, attrType, Pos)
 	Name.TextColor3 = Color3.fromRGB(255, 255, 255)
 	Name.TextSize = 14.000
 	Name.TextXAlignment = Enum.TextXAlignment.Left
-
-	Value.Name = "Value"
-	Value.Parent = Attribute
-	Value.BackgroundColor3 = Color3.fromRGB(38, 39, 36)
-	Value.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	Value.Position = UDim2.new(0, 0, 0.285106421, 0)
-	Value.Size = UDim2.new(1, 0, 0.714893639, 0)
-	Value.Font = Enum.Font.SourceSans
-	Value.Text = attrValue
-	Value.TextColor3 = Color3.fromRGB(255, 255, 255)
-	Value.TextSize = 14.000
-	
-	Value.FocusLost:Connect(function()
-		-- if its a boolean value change the reception type and set attribute to a boolean value
-		
-		local success, err = pcall(function()
-			local valueText = string.lower(Value.Text)
-			local valueToReturn = nil
-			if isBool then
-				if valueText == 'true' then
-					valueToReturn = true
-				else
-					valueToReturn = false
-				end
-			elseif isNum then
-				valueToReturn = tonumber(valueText)
-				if valueToReturn == nil then
-					warn('For some reason, your change was not valid: "' .. Value.Text .. '" is not a valid number.') 
-					return
-				end
-			elseif isString then
-				valueToReturn = Value.Text
-			end
-			
-			LastSelection:SetAttribute(attrName, valueToReturn)
-		end)
-		
-		if not success then 
-			warn('For some reason, your change was not valid:', err) 
-		end
-		
-	end)
 	
 	return Attribute
 	
